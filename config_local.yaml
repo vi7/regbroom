@@ -1,0 +1,24 @@
+---
+# Config file for the Docker Registry Broom
+debug: true
+dryrun: false
+force: false
+defaults:
+  release_ver_pattern: '^\d+\.\d+\.\d+$'
+  release_ver_keep: 10
+  dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'
+  # makes sense only if there will be release tags to keep
+  dev_ver_keep: 3
+images:
+## Example image repo definition with all the available options
+- repo: my-repo.example.com:5000/foo/bar
+  release_ver_pattern: '^\d+\.\d+\.\d+$'
+  release_ver_keep: 30
+  dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'
+  dev_ver_keep: 5
+## Example for cleaning all the images in the repo
+- repo: my-repo.example.com:5000/my-repos/repo-to-clean
+  release_ver_pattern: '.*'
+  release_ver_keep: 0
+  dev_ver_pattern: '.*'
+  dev_ver_keep: 0
