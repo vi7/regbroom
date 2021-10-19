@@ -31,7 +31,6 @@ python -m regbroom
 
 > Dry run mode is enabled in the default [config_local.yaml](./config_local.yaml) so the command above will not perform any real cleanup.
 
-TODO: pack the tool as Docker image to avoid preparation steps above altogether
 
 Configuration
 -------------
@@ -47,3 +46,10 @@ python -m regbroom --config /path/to/the/config_local.yaml
 ### Config examples
 
 See [config_local.yaml](./config_local.yaml) for some handy configuration examples
+
+
+TODO:
+-----
+
+- pack the tool as Docker image to avoid preparation steps above altogether
+
