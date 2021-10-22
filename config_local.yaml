@@ -1,24 +1,32 @@
 ---
-# Config file for the Docker Registry Broom
+# Config file for the regbroom tool
 debug: true
-dryrun: false
-force: false
+dryrun: true
 defaults:
-  release_ver_pattern: '^\d+\.\d+\.\d+$'
+  release_ver_pattern: '^\d+\.\d+\.\d+$'  # matches semver, e.g.: X.Y.Z
   release_ver_keep: 10
-  dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'
-  # makes sense only if there will be release tags to keep
+  dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'  # matches semver with patch, e.g.: X.Y.Z-bla.1
   dev_ver_keep: 3
+
+# Image repos to cleanup
 images:
-## Example image repo definition with all the available options
-- repo: my-repo.example.com:5000/foo/bar
-  release_ver_pattern: '^\d+\.\d+\.\d+$'
-  release_ver_keep: 30
-  dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'
-  dev_ver_keep: 5
-## Example for cleaning all the images in the repo
-- repo: my-repo.example.com:5000/my-repos/repo-to-clean
+  ## Simple definition which will use cleanup params from the 'defaults' dict
+- repo: my-awesome-registry.example.com:5000/projects/my-image
+
+  ## Definition with all the params overridden
+- repo: my-awesome-registry.example.com:5000/foo/bar
+  release_ver_pattern: '^\d+\.\d+$'
+  release_ver_keep: 5
+  dev_ver_pattern: '^\d+\.\d+-.*$'
+  dev_ver_keep: 2
+  ## force cleanup of the dev tags when no release tags found
+  force: true
+
+  ## Example definition for cleaning ALL the images in the repo
+- repo: my-awesome-registry.example.com:5000/my-repos/repo-to-clean
   release_ver_pattern: '.*'
   release_ver_keep: 0
   dev_ver_pattern: '.*'
   dev_ver_keep: 0
+  ## Do not fail on tag deletion error
+  fail_on_error: false

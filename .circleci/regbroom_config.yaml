@@ -1,0 +1,20 @@
+---
+# Regbroom config for CI
+debug: true
+dryrun: true
+defaults:
+  release_ver_pattern: '^\d+\.\d+\.\d+$'  # matches semver, e.g.: X.Y.Z
+  release_ver_keep: 5
+  dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'  # matches semver with patch, e.g.: X.Y.Z-bla.1
+  dev_ver_keep: 3
+images:
+- repo: cimg/python
+- repo: centos
+  release_ver_pattern: '^centos\d+\.\d+$'
+  release_ver_keep: 3
+  dev_ver_pattern: '^centos\d+\.\d+\.\d+$'
+  dev_ver_keep: 1
+- repo: python
+  release_ver_pattern: '^bla.*$'
+  dev_ver_pattern: '^\d+\.\d+-.*$'
+  force: true

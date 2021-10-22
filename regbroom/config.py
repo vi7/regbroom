@@ -11,9 +11,11 @@ def set_defaults(config):
       config['images'][i].get(dict).setdefault('release_ver_keep', config['defaults']['release_ver_keep'].get(int))
       config['images'][i].get(dict).setdefault('dev_ver_pattern', config['defaults']['dev_ver_pattern'].get(str))
       config['images'][i].get(dict).setdefault('dev_ver_keep', config['defaults']['dev_ver_keep'].get(int))
+      config['images'][i].get(dict).setdefault('force', False)
+      config['images'][i].get(dict).setdefault('fail_on_error', True)
 
 def load_config(args):
-    """Load configuration from the provided config.yaml
+    """Load configuration from the provided config_local.yaml
     """
     config = confuse.Configuration('regbroom', __name__)
     config_path = 'config_local.yaml' if not args.config else args.config

@@ -1,0 +1,8 @@
+{
+  "hosts": {
+    "my-awesome-registry.example.com:5000": {
+      "tls": "disabled",
+      "hostname": "my-awesome-registry.example.com:5000"
+    }
+  }
+}

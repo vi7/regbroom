@@ -30,8 +30,8 @@ def run_regctl(args, fail_on_error=True):
                     )
                 )
         else:
-            l.log_debug("\033[33mWARN: regctl failed with error\nstdout: {}\nstderr: {}\033[0".format(err.stdout, err.stderr))
-            l.log_debug("\033[33mWARN: silently skipping this failure\033[0")
+            l.log("\033[33mWARN: regctl failed with error\nstdout: {}\nstderr: {}\033[0".format(err.stdout, err.stderr))
+            l.log("\033[33mWARN: silently skipping this failure\033[0")
     return
 
 def list_tags(repo):
@@ -76,38 +76,46 @@ def get_dev_tags(all_tags, release_tags_keep, dev_pattern, dev_keep_count):
     """
     l.log('Generating cleanup and keep lists for the DEV tags')
     dev_tags_keep = []
-    rel_tags_keep_rev = list(reversed(release_tags_keep))
     dev_tags = filter_tags(all_tags, dev_pattern)
-    # Prefetch all DEV tags related to the kept RELEASE tags
-    # to avoid multiple iterations over the huge list of all DEV tags
-    dev_tags_keep_pre = [dev_tag for rel_tag in rel_tags_keep_rev for dev_tag in reversed(dev_tags) if rel_tag in dev_tag]
 
-    # Iterate over reversed lists of the dev and release tags to find
-    # the most recent tags faster and keep on
-    for rel_tag in rel_tags_keep_rev:
-        i = 0
-        l.log_debug("Reverse searching DEV tags for the RELEASE {}".format(rel_tag))
-        for tag in dev_tags_keep_pre:
-            if rel_tag in tag:
-                l.log_debug("DEV tag {} found. Adding to the keep list".format(tag))
-                dev_tags_keep.insert(0, tag)
-                i = i + 1
-                if i == dev_keep_count:
-                    break
-    dev_tags_clean = [tag for tag in dev_tags if tag not in dev_tags_keep]
+    if release_tags_keep:
+        rel_tags_keep_rev = list(reversed(release_tags_keep))
+        # Prefetch all DEV tags related to the kept RELEASE tags
+        # to avoid multiple iterations over the huge list of all DEV tags
+        dev_tags_keep_pre = [dev_tag for rel_tag in rel_tags_keep_rev for dev_tag in reversed(dev_tags) if rel_tag in dev_tag]
+
+        # Iterate over reversed lists of the dev and release tags to find
+        # the most recent tags faster and keep on
+        for rel_tag in rel_tags_keep_rev:
+            i = 0
+            l.log_debug("Reverse searching DEV tags for the RELEASE {}".format(rel_tag))
+            for tag in dev_tags_keep_pre:
+                if rel_tag in tag:
+                    l.log_debug("DEV tag {} found. Adding to the keep list".format(tag))
+                    dev_tags_keep.insert(0, tag)
+                    i = i + 1
+                    if i == dev_keep_count:
+                        break
+        dev_tags_clean = [tag for tag in dev_tags if tag not in dev_tags_keep]
+    # Ensure to keep at least 'dev_keep_count' when no release tags found
+    else:
+        dev_keep_count_norm = 0 if dev_keep_count >= len(dev_tags) else len(dev_tags) - dev_keep_count
+        dev_tags_clean = dev_tags[:dev_keep_count_norm:]
+        dev_tags_keep = dev_tags[dev_keep_count_norm::]
+
     return (dev_tags_clean, dev_tags_keep)
 
-def delete_tag(repo, tag):
+def delete_image(repo, tag, fail_on_error):
     """Delete docker image (manifest) by tag
     This does not delete the actual data (blobs) from the registry,
     meaning that you must still run 'registry garbage-collect' on your own
     """
     image_url = "{}:{}".format(repo, tag)
     l.log_debug("Removing image {}".format(image_url))
-    # TODO: make fail_on_error configurable via config.yaml
-    run_regctl(["tag", "delete", image_url], False)
+    run_regctl(["tag", "delete", image_url], fail_on_error)
 
-def sweep_repo(repo_url, release_pattern, release_keep_count, dev_pattern, dev_keep_count):
+def sweep_repo(repo_url, release_pattern, release_keep_count,
+               dev_pattern, dev_keep_count, force, fail_on_error):
     """Run cleanup for the repository with specified parameters
     """
     all_tags = list_tags(repo_url)
@@ -118,16 +126,18 @@ def sweep_repo(repo_url, release_pattern, release_keep_count, dev_pattern, dev_k
     release_tags = get_release_tags(all_tags, release_pattern, release_keep_count)
     rel_tags_clean = release_tags[0]
     rel_tags_keep = release_tags[1]
+
+    if not rel_tags_clean and not rel_tags_keep and not force:
+        l.log("\033[33mWARN: No RELEASE tags found for pattern \"{}\"\n\
+        Dev tags with pattern \"{}\" won't be touched at all.\n\
+        Set 'force: true' for the image repo config to still cleanup dev tags\n\
+        \033[0m".format(release_pattern, dev_pattern))
+        return
+
     l.log("The following {} RELEASE tags will be REMOVED".format(len(rel_tags_clean)))
     l.log_debug("\n{}".format('\n'.join(rel_tags_clean)))
     l.log("The following {} RELEASE tags will be kept".format(len(rel_tags_keep)))
     l.log_debug("\n{}".format('\n'.join(rel_tags_keep)))
-
-    if not rel_tags_clean and not rel_tags_keep and not config['force'].get(bool):
-        l.log("\033[33mWARN: Both cleanup and keep lists for 'release_ver_pattern' are empty!\033[0m")
-        l.log("\033[33mWARN: Skipping further actions to avoid unwanted removal of all 'dev_ver_pattern' tags\033[0m")
-        l.log("\033[33mWARN: Set 'force: true' in the config if you are completely sure what you're doing\033[0m")
-        return
 
     dev_tags = get_dev_tags(all_tags, rel_tags_keep, dev_pattern, dev_keep_count)
     dev_tags_clean = dev_tags[0]
@@ -137,20 +147,20 @@ def sweep_repo(repo_url, release_pattern, release_keep_count, dev_pattern, dev_k
     l.log("The following {} DEV tags will be kept".format(len(dev_tags_keep)))
     l.log_debug("\n{}".format('\n'.join(dev_tags_keep)))
 
-    if not config['dryrun']:
+    if not config['dryrun'].get(bool):
         if not rel_tags_clean:
             l.log("No RELEASE tags for cleanup found")
         else:
             l.log("Performing RELEASE tags cleanup")
             for tag in rel_tags_clean:
-                delete_tag(repo_url, tag)
+                delete_image(repo_url, tag, fail_on_error)
 
         if not dev_tags_clean:
             l.log("No DEV tags for cleanup found")
         else:
             l.log("Performing DEV tags cleanup")
             for tag in dev_tags_clean:
-                delete_tag(repo_url, tag)
+                delete_image(repo_url, tag, fail_on_error)
     else:
         l.log("\033[1;33mDry run mode enabled. Skipping actual cleanup\033[0;0m")
 
@@ -163,8 +173,9 @@ def sweep():
                    config['images'][i]['release_ver_pattern'].get(str),
                    config['images'][i]['release_ver_keep'].get(int),
                    config['images'][i]['dev_ver_pattern'].get(str),
-                   config['images'][i]['dev_ver_keep'].get(int))
+                   config['images'][i]['dev_ver_keep'].get(int),
+                   config['images'][i]['force'].get(bool),
+                   config['images'][i]['fail_on_error'].get(bool))
 
     print("\n\n\033[1;33m[IMPORTANT] Run garbage collection for the Registry to retain the actual disk space!\n\
         See here https://docs.docker.com/registry/garbage-collection/ for the details\033[0;0m\n")
-
