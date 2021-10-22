@@ -11,6 +11,7 @@ jobs:
       - run: |
           wget -O /usr/local/bin/regctl https://github.com/regclient/regclient/releases/download/v${REGCTL_VER}/regctl-linux-amd64
           chmod a+x /usr/local/bin/regctl
+          chown $(whoami) /usr/local/bin/regctl
           pip install -r requirements.txt
           python -m regbroom -c .circleci/regbroom_config.yaml
 workflows:
