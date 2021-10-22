@@ -7,6 +7,8 @@ Regbroom tool cleans up Docker Registry image tags by specified release (e.g. X.
 
 Dev version tag keep logic is the following: keep specified in the config amount of dev tags per kept release tag (substring match) OR just keep specified amount of dev tags from the whole list of tags matching dev pattern if no release tags found and `force` flag is specified in the repo config.
 
+> **IMPORTANT** Tool relies on 'last updated' sorting of the Docker Registry API, thus Regbroom might not work as you expect if your Registry API sorts the list of tags differently.
+> For example Docker HUB API seems to sort in lexicographic order which won't be suitable for the Regbroom
 
 Table of contents
 -----------------
