@@ -2,7 +2,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: cimg/python:3.10.0
+      - image: python:3.10.0-alpine3.14
         # auth:
         #   username: mydockerhub-user
         #   password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -11,8 +11,8 @@ jobs:
       - run: |
           wget -O /usr/local/bin/regctl https://github.com/regclient/regclient/releases/download/v${REGCTL_VER}/regctl-linux-amd64
           chmod a+x /usr/local/bin/regctl
-          chown $(whoami) /usr/local/bin/regctl
           pip install -r requirements.txt
+          echo "==== Starting REGBROOM ===="
           python -m regbroom -c .circleci/regbroom_config.yaml
 workflows:
   version: 2
