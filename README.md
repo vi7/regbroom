@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/vi7/regbroom/tree/master.svg?style=svg)](https://circleci.com/gh/vi7/regbroom/tree/master)
 Docker Registry Broom - make your registry clean again!
 ============================
 

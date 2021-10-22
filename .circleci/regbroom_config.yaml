@@ -16,5 +16,5 @@ images:
   dev_ver_keep: 1
 - repo: python
   release_ver_pattern: '^bla.*$'
-  dev_ver_pattern: '^\d+\.\d+-.*$'
+  dev_ver_pattern: '^\d+\.\d+-alpine.*$'
   force: true
