@@ -1,21 +1,39 @@
 version: 2
 jobs:
-  test:
+  check_version:
     docker:
-      - image: python:3.10.0-alpine3.14
+      - image: alpine
         # auth:
         #   username: mydockerhub-user
         #   password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
     steps:
       - checkout
-      - run: |
-          wget -O /usr/local/bin/regctl https://github.com/regclient/regclient/releases/download/v${REGCTL_VER}/regctl-linux-amd64
-          chmod a+x /usr/local/bin/regctl
-          pip install -r requirements.txt
-          echo "==== Starting REGBROOM ===="
-          python -m regbroom -c .circleci/regbroom_config.yaml
+      - run:
+          name: check-version
+          command: |
+            apk add --no-cache make git openssh
+            make check-version
+          no_output_timeout: 5m
+  test:
+    docker:
+      - image: python:3.10.0-alpine3.14
+    steps:
+      - checkout
+      - run:
+          name: smoke-test
+          command: |
+            wget -O /usr/local/bin/regctl https://github.com/regclient/regclient/releases/download/v${REGCTL_VER}/regctl-linux-amd64
+            chmod a+x /usr/local/bin/regctl
+            pip install -r requirements.txt
+            echo "==== Starting REGBROOM ===="
+            python -m regbroom -c .circleci/regbroom_config.yaml
+          no_output_timeout: 5m
 workflows:
   version: 2
   test:
     jobs:
+      - check_version:
+          filters:
+            branches:
+              ignore: /^master$/
       - test
