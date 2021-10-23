@@ -31,9 +31,6 @@ jobs:
   release:
     docker:
       - image: alpine
-        auth:
-          username: vi7al
-          password: $DOCKER_REGISTRY_PASSWORD
     steps:
       - checkout
       - setup_remote_docker:
@@ -43,7 +40,9 @@ jobs:
           command: apk add --no-cache docker-cli make
       - run:
           name: Docker image release
-          command: make release
+          command: |
+            docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+            make release
 
 workflows:
   version: 2
