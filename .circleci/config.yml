@@ -28,12 +28,41 @@ jobs:
             echo "==== Starting REGBROOM ===="
             python -m regbroom -c .circleci/regbroom_config.yaml
           no_output_timeout: 5m
+  release:
+    docker:
+      - image: alpine
+        auth:
+          username: vi7al
+          password: $DOCKER_REGISTRY_PASSWORD
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.7
+      - run:
+          name: Install packages
+          command: apk add --no-cache docker-cli make
+      - run:
+          name: Docker image release
+          command: make release
+
 workflows:
   version: 2
-  test:
+  checkver-test-release:
     jobs:
       - check_version:
           filters:
             branches:
               ignore: /^master$/
-      - test
+      - test:
+          filters:
+            # Tag triggers are ignored by default and must be enabled explicitly
+            tags:
+              only: /^\d\.\d\.\d$/
+      - release:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^\d\.\d\.\d$/
+            branches:
+              ignore: /.*/

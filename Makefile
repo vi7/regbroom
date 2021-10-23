@@ -15,7 +15,7 @@ help: ## This help.
 .DEFAULT_GOAL := help
 
 
-release: build-nc push git-tag git-push ## Make a release by building and pushing the `{version}` and `latest` tagged images to the registry
+release: build-nc push ## Make a release by building and pushing the `{version}` and `latest` tagged images to the registry
 
 # GIT TASKS
 git-tag: ## Tag the latest commit

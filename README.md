@@ -110,18 +110,12 @@ Bump the version in the [ci/build.env](ci/build.env)
 
 Create Merge Request and add maintainers from [Dockerfile](Dockerfile) as reviewers
 
-After MR is reviewed, tested and merged to the master run:
+After MR is reviewed, checked by CI and merged to the master run:
 ```bash
 git checkout master && git pull --rebase
-make release
+make git-tag git-push
 ```
 
+CI will be triggered automatically now and release Docker image to the Registry
+
 > Run `make help` to see all the available tasks
-
-
-TODO:
------
-
-- CI: run check_version.sh for PRs
-- CI: functional tests by parsing regbroom stdout for expected messages
-- Connect to Dockerhub for images building
