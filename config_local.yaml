@@ -7,6 +7,8 @@ defaults:
   release_ver_keep: 10
   dev_ver_pattern: '^\d+\.\d+\.\d+-.*$'  # matches semver with patch, e.g.: X.Y.Z-bla.1
   dev_ver_keep: 3
+  # Whether to fail on tag deletion errors. Default: true
+  #fail_on_error: true
 
 # Image repos to cleanup
 images:
